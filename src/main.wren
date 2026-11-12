@@ -2,9 +2,9 @@
 // DOME entry point and pixel-art game loop
 
 import "./room" for Room
-import "dome" for Window
+import "dome" for Window, Process
 import "graphics" for Canvas, Color
-import "input" for Keyboard
+import "input" for Keyboard, Mouse
 import "random" for Random
 
 class Main {
@@ -63,6 +63,24 @@ class Main {
   }
 
   update() {
+    if (_runState == "congrats") {
+      if (Keyboard["return"].justPressed || Keyboard["space"].justPressed || Mouse["left"].justPressed) {
+        Process.exit()
+      }
+      return
+    }
+
+    if (_runState == "victory") {
+      if (Keyboard["return"].justPressed || Keyboard["space"].justPressed || Keyboard["1"].justPressed || endDoorClicked()) {
+        _runState = "congrats"
+        _feedback = ""
+        _feedbackDetail = ""
+      } else if (Keyboard["r"].justPressed) {
+        resetGame()
+      }
+      return
+    }
+
     if (_runState != "playing") {
       if (Keyboard["r"].justPressed) resetGame()
       return
@@ -92,6 +110,14 @@ class Main {
     } else if (Keyboard["return"].justPressed || Keyboard["space"].justPressed) {
       chooseDoor(_selectedDoorIndex)
     }
+  }
+
+  endDoorClicked() {
+    if (!Mouse["left"].justPressed) return false
+
+    var mouseX = Mouse.x * 320 / Window.width
+    var mouseY = Mouse.y * 240 / Window.height
+    return mouseX >= 96 && mouseX <= 224 && mouseY >= 61 && mouseY <= 165
   }
 
   chooseDoor(index) {
@@ -124,6 +150,7 @@ class Main {
     drawSign()
     drawDoors()
     drawInterface()
+    if (_runState == "congrats") drawCongratsPopup()
   }
 
   drawRoom() {
@@ -169,6 +196,11 @@ class Main {
   }
 
   drawDoors() {
+    if (_runState == "victory" || _runState == "congrats") {
+      drawEndDoor()
+      return
+    }
+
     for (i in 0...3) {
       var door = _activeRoom.doors[i]
       var x = 25 + i * 95
@@ -187,6 +219,17 @@ class Main {
       Canvas.print("%(door.id) %(door.color)", x + 6, 127, _text)
       Canvas.print(door.shape, x + 6, 137, _mutedText)
     }
+  }
+
+  drawEndDoor() {
+    Canvas.rectfill(96, 61, 128, 104, _border)
+    Canvas.rectfill(100, 65, 120, 100, _red)
+    Canvas.rectfill(108, 71, 104, 87, _panel)
+    Canvas.rectfill(113, 76, 94, 77, _red)
+    Canvas.rectfill(118, 81, 84, 67, _panel)
+    Canvas.rectfill(188, 111, 5, 5, _gold)
+    Canvas.print("DO NOT", 136, 103, _text)
+    Canvas.print("PRESS ME", 128, 119, _text)
   }
 
   drawDoorShape(shape, x, y, color) {
@@ -237,10 +280,20 @@ class Main {
     if (_runState == "gameover") {
       Canvas.print("GAME NOT OVER - DON'T PRESS R", 18, 207, _red)
     } else if (_runState == "victory") {
-      Canvas.print("NOT CLEARED! - DON'T PRESS R", 18, 207, _gold)
+      Canvas.print("CLICK THE DOOR OR PRESS ENTER", 18, 207, _gold)
+    } else if (_runState == "congrats") {
+      Canvas.print("ENTER OR CLICK TO CLOSE", 18, 207, _gold)
     } else {
       Canvas.print("1-3: DON'T OPEN   ENTER = DON'T OPEN", 18, 207, _mutedText)
     }
+  }
+
+  drawCongratsPopup() {
+    Canvas.rectfill(52, 78, 216, 84, _border)
+    Canvas.rectfill(56, 82, 208, 76, _panel)
+    Canvas.print("CONGRATS!", 134, 96, _gold)
+    Canvas.print("YOU FOUND THE", 108, 114, _text)
+    Canvas.print("LAST DOOR.", 120, 130, _text)
   }
 }
 

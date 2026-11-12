@@ -41,5 +41,11 @@ if errorlevel 1 (
   exit /b 1
 )
 
+python "%ROOT%tools\embed_icon.py" "%OUTPUT%\ButtonOfSigns.exe" "%ROOT%assets\icon.ico"
+if errorlevel 1 (
+  echo Could not embed the game icon.
+  exit /b 1
+)
+
 echo Standalone game created: "%OUTPUT%\ButtonOfSigns.exe"
 exit /b 0
